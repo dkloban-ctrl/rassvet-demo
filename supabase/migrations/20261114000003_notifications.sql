@@ -301,7 +301,7 @@ do $$
 begin
   if exists (select 1 from pg_available_extensions where name = 'pg_net')
      and exists (select 1 from pg_available_extensions where name = 'pg_cron') then
-    create extension if not exists pg_net;
+    create extension if not exists pg_net with schema extensions;  -- не в public (советник безопасности)
     create extension if not exists pg_cron;
     perform cron.schedule('rassvet-notify', '*/5 * * * *', 'select private.kick_notifications()');
     -- Старые отправленные задания и журнал ответов pg_net не копим.

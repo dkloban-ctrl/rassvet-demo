@@ -28,6 +28,20 @@ revoke all on function private.guard_signup() from public, authenticated, anon;
 create trigger rassvet_guard_signup before insert on auth.users
   for each row execute function private.guard_signup();
 
+-- Auth после вставки ещё раз записывает user_metadata (UPDATE) — без этого триггера ключ
+-- вернулся бы в метаданные, и любой зарегистрированный прочитал бы его у себя (найдено на демо).
+create function private.strip_signup_key() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.raw_user_meta_data ? 'rassvet_signup_key' then
+    new.raw_user_meta_data := new.raw_user_meta_data - 'rassvet_signup_key';
+  end if;
+  return new;
+end $$;
+revoke all on function private.strip_signup_key() from public, authenticated, anon;
+create trigger rassvet_strip_signup_key before update on auth.users
+  for each row execute function private.strip_signup_key();
+
 create function public.signup_key() returns text
 language sql stable security definer set search_path = '' as $$
   select private.secret('rassvet_signup_key')

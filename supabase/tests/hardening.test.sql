@@ -37,6 +37,10 @@ select lives_ok($$insert into auth.users (id, email, raw_user_meta_data)
   'регистрация с серверным ключом (redeem-invite) проходит');
 select is((select raw_user_meta_data from auth.users where id = '00000000-0000-0000-0000-000000000094'), '{"x":1}'::jsonb,
   'ключ не сохраняется в базе');
+update auth.users set raw_user_meta_data = raw_user_meta_data || '{"rassvet_signup_key":"k-123"}'
+ where id = '00000000-0000-0000-0000-000000000094';
+select is((select raw_user_meta_data from auth.users where id = '00000000-0000-0000-0000-000000000094'), '{"x":1}'::jsonb,
+  'и при повторной записи метаданных (так делает Auth) ключ вырезается');
 
 -- ── Профили для проверок ниже ──
 insert into public.profiles (id, display_name, role, status) values

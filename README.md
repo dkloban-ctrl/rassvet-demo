@@ -10,7 +10,7 @@
 app/, components/, lib/        приложение: Next.js (статический экспорт) + Tailwind
 public/                        манифест PWA, service worker, иконки
 supabase/migrations/           схема, RLS, функции, журнал
-supabase/tests/                188 тестов прав (pgTAP)
+supabase/tests/                189 тестов прав (pgTAP)
 supabase/functions/            регистрация по приглашению, сброс пароля подростка, рассылка уведомлений
 docs/permissions.md            матрица прав — читать первой
 scripts/local-test/            прогон SQL-тестов без Supabase CLI, проверка шифрования пушей
