@@ -1,7 +1,7 @@
 // Web Push без внешних библиотек: только WebCrypto (есть и в Deno, и в браузере, и в Node 20+).
 //   • шифрование содержимого — RFC 8291 (aes128gcm, RFC 8188);
 //   • подпись отправителя — VAPID, RFC 8292 (JWT ES256).
-// Проверено обратной расшифровкой эталонной библиотекой http_ece (webpush.test.ts).
+// Проверено обратной расшифровкой эталонной библиотекой http_ece (scripts/local-test/webpush.check.ts).
 
 export type PushSubscription = { endpoint: string; p256dh: string; auth: string };
 export type VapidKeys = { publicKey: string; privateJwk: JsonWebKey; subject: string };
