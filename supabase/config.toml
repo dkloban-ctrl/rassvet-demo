@@ -1,0 +1,18 @@
+# Фрагмент конфигурации Supabase CLI (дополнить тем, что создаст `supabase init`).
+
+[auth]
+# ОБЯЗАТЕЛЬНО: открытая регистрация выключена. Аккаунты создаются только по приглашению
+# через функцию redeem-invite. То же — в панели: Authentication → Sign In / Providers →
+# «Allow new users to sign up» = выкл.
+enable_signup = false
+minimum_password_length = 8
+
+[auth.email]
+enable_signup = false
+
+# Регистрация по приглашению — до входа, поэтому без проверки токена.
+[functions.redeem-invite]
+verify_jwt = false
+
+[functions.reset-teen-password]
+verify_jwt = true
