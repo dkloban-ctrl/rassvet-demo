@@ -2,6 +2,7 @@
 
 import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { disablePush } from "@/lib/push";
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/types";
 
@@ -56,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadProfile]);
 
   const signOut = useCallback(async () => {
+    // Телефон бывает общим на семью: после выхода уведомления этого человека сюда не идут.
+    await Promise.race([disablePush().catch(() => {}), new Promise((r) => setTimeout(r, 3000))]);
     await supabase.auth.signOut();
     setSession(null);
     setProfile(null);

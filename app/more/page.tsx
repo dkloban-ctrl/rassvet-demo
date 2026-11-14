@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/providers";
 import { AppShell } from "@/components/AppShell";
+import { NotificationSettings } from "@/components/Notifications";
 import { Badge, Button, Card, Notice, PageTitle, SectionTitle } from "@/components/ui";
 import { emailToLogin } from "@/lib/supabase";
 import { ROLE_LABEL } from "@/lib/types";
@@ -79,9 +80,7 @@ function More() {
       </Card>
 
       <SectionTitle>Уведомления</SectionTitle>
-      <Card>
-        <p className="text-sm text-muted">Пуш-уведомления о новом листке и вопросе появятся в следующей версии. Пока заглядывайте по понедельникам и средам.</p>
-      </Card>
+      <NotificationSettings />
 
       <SectionTitle>Кто видит мои данные</SectionTitle>
       <Card className="text-sm space-y-1.5">

@@ -16,3 +16,7 @@ verify_jwt = false
 
 [functions.reset-teen-password]
 verify_jwt = true
+
+# Рассылка уведомлений: её будит база (pg_net / pg_cron) с паролем из Vault, а не человек.
+[functions.send-notifications]
+verify_jwt = false

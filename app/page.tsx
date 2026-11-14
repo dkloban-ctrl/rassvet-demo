@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { PushPrompt } from "@/components/Notifications";
 import { Badge, Card, ErrorBox, Loading, SectionTitle } from "@/components/ui";
 import { useAuth } from "./providers";
 import { fmtDate, fmtWeek, fmtWeekday, fmtTime } from "@/lib/format";
@@ -54,6 +55,7 @@ function Week() {
   return (
     <div>
       <p className="px-1 text-sm text-muted">Привет, {profile?.display_name}!</p>
+      <PushPrompt />
 
       {leaflet ? (
         <Link href={`/leaflet/?id=${leaflet.id}`} className="block mt-3">

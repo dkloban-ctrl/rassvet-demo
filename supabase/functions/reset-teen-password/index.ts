@@ -2,6 +2,7 @@
 //
 // POST { teenId }   Authorization: Bearer <токен вызывающего>
 // 200 { login, password }   временный пароль показывается ОДИН раз — передать ребёнку лично.
+// Все прежние сессии ребёнка завершаются (вход заново на всех устройствах).
 //
 // Почему пароль генерирует сервер, а не вводит родитель: иначе будут «12345678».
 
@@ -25,6 +26,10 @@ Deno.serve(handle(async (req, body) => {
   const password = generatePassword();
   const { data: updated, error: updErr } = await admin.auth.admin.updateUserById(teenId, { password });
   if (updErr) throw updErr;
+
+  // Выйти на всех устройствах: потерянный телефон не должен остаться в аккаунте.
+  const { error: sessErr } = await admin.rpc("revoke_user_sessions", { p_user: teenId });
+  if (sessErr) console.error("revoke sessions failed", sessErr);
 
   const { error: auditErr } = await admin.from("audit_log").insert({
     actor_id: actor,

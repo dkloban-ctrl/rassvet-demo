@@ -21,7 +21,17 @@ type Invite = { id: string; role: "admin" | "helper" | "parent" | "teen"; email:
 
 const INVALID = "Приглашение недействительно или уже использовано";
 
+// Не больше 20 обращений за 15 минут с одного адреса (включая предпросмотр): перебор
+// кодов бессмыслен (128 бит), но так функцию нельзя завалить запросами.
+async function tooMany(req: Request): Promise<boolean> {
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+  const { data, error } = await adminClient().rpc("rate_limit_hit", { p_key: `redeem:${ip}`, p_max: 20, p_window: "15 minutes" });
+  if (error) { console.error("rate limit", error); return false; } // сбой счётчика не должен ломать регистрацию
+  return data === false;
+}
+
 Deno.serve(handle(async (req, body) => {
+  if (await tooMany(req)) return json(req, 429, { error: "Слишком много попыток. Подождите 15 минут." });
   const code = validateInviteCode(body.code);
   if (!code.ok) return json(req, 400, { error: INVALID });
 
@@ -62,9 +72,14 @@ Deno.serve(handle(async (req, body) => {
   const pw = validatePassword(body.password, login);
   if (!pw.ok) return json(req, 400, { error: pw.error, field: "password" });
 
+  // Ключ регистрации: база пропускает в auth.users только пользователей с ним (открытая
+  // регистрация закрыта даже при включённом флажке в панели). Триггер ключ вырезает.
+  const { data: signupKey, error: keyErr } = await admin.rpc("signup_key");
+  if (keyErr) throw keyErr;
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email,
     password: pw.value,
+    user_metadata: signupKey ? { rassvet_signup_key: signupKey } : {},
     // Подтверждать почту не нужно: у подростка адрес технический, у взрослого его вписал админ в приглашение.
     email_confirm: true,
   });

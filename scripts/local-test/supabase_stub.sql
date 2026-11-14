@@ -8,7 +8,12 @@ end $$;
 grant anon, authenticated, service_role to postgres;
 
 create schema auth;
-create table auth.users (id uuid primary key, email text unique);
+create table auth.users (id uuid primary key, email text unique, raw_user_meta_data jsonb);
+create table auth.sessions (id uuid primary key default gen_random_uuid(), user_id uuid not null);
+
+-- Vault: в Supabase секреты зашифрованы; здесь — простая таблица с тем же представлением.
+create schema vault;
+create table vault.decrypted_secrets (name text primary key, decrypted_secret text);
 -- Как в Supabase: пустой или отсутствующий токен даёт null, а не ошибку.
 create function auth.uid() returns uuid language sql stable as $$
   select coalesce(
@@ -25,4 +30,7 @@ alter default privileges in schema public grant all on tables    to anon, authen
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 
-create extension if not exists pgtap;
+-- pgTAP: расширением, если установлено в систему; иначе run.sh подгрузит его скриптом (PGTAP_SQL).
+do $$ begin
+  if exists (select from pg_available_extensions where name = 'pgtap') then create extension if not exists pgtap; end if;
+end $$;

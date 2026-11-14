@@ -55,10 +55,36 @@ function DeleteButton({ busy, onConfirm, what }: { busy: boolean; onConfirm: () 
   );
 }
 
+
+// ───────────────── Статус рассылки (очередь notification_outbox) ─────────────────
+type Outbox = { ref_id: string; sent_at: string | null; due_at: string; push_sent: number | null; emails_sent: number | null; attempts: number; note: string | null };
+
+function useNotifyStatus(kind: "leaflet" | "question" | "announcement", list: unknown) {
+  const { data } = useLoad(async () => {
+    const { data } = await supabase.from("notification_outbox")
+      .select("ref_id, sent_at, due_at, push_sent, emails_sent, attempts, note").eq("kind", kind);
+    return new Map(((data ?? []) as Outbox[]).map((r) => [r.ref_id, r]));
+  }, [kind, list]); // перечитываем вместе со списком (после сохранения)
+  return data ?? new Map<string, Outbox>();
+}
+
+function NotifyBadge({ row }: { row?: Outbox }) {
+  if (!row) return null;
+  if (row.sent_at) {
+    const emails = row.emails_sent ? ` · ✉ ${row.emails_sent}` : "";
+    return <span className="text-xs text-muted" title={row.note ?? "уведомление отправлено"}>🔔 {row.push_sent ?? 0}{emails}</span>;
+  }
+  if (row.attempts >= 5) return <span className="text-xs text-red-700" title={row.note ?? ""}>🔔 не ушло</span>;
+  return <span className="text-xs text-muted" title={row.note ?? ""}>🔔 {new Date(row.due_at) > new Date() ? `в ${fmtDateTime(row.due_at)}` : "отправляется…"}</span>;
+}
+
+const NOTIFY_HINT = " — придёт уведомление";
+
 // ───────────────────────── Листки ─────────────────────────
 export function LeafletsAdmin() {
   const { data, error, loading, reload } = useLoad(async () =>
     must(await supabase.from("leaflets").select("*").order("week", { ascending: false })) as Leaflet[], []);
+  const notify = useNotifyStatus("leaflet", data);
   const [edit, setEdit] = useState<Leaflet | "new" | null>(null);
   if (loading && !data) return <Loading />;
   if (error || !data) return <ErrorBox>{error}</ErrorBox>;
@@ -75,7 +101,7 @@ export function LeafletsAdmin() {
                 <p className="font-medium text-night truncate">{l.title}</p>
                 <p className="text-xs text-muted">{fmtWeek(l.week)}{l.verse_ref ? ` · ${l.verse_ref}` : ""}</p>
               </div>
-              <span className="ml-auto">{l.published_at ? <Badge tone="green">опубликован</Badge> : <Badge tone="gold">черновик</Badge>}</span>
+              <span className="ml-auto flex items-center gap-2 shrink-0"><NotifyBadge row={notify.get(l.id)} />{l.published_at ? <Badge tone="green">опубликован</Badge> : <Badge tone="gold">черновик</Badge>}</span>
             </button>
           ))}
         </Card>
@@ -102,7 +128,7 @@ function LeafletForm({ item, onDone, onCancel }: { item: Leaflet | null; onDone:
       <Field label="Текст листка" hint="Абзацы — через пустую строку. ## Подзаголовок, - пункт списка, **жирный**.">
         <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="min-h-64" />
       </Field>
-      <PublishBox checked={pub} onChange={setPub} />
+      <PublishBox checked={pub} onChange={setPub} label={`Опубликовать (увидят все)${item?.published_at ? "" : NOTIFY_HINT}`} />
       <ErrorBox>{error}</ErrorBox>
       <div className="flex gap-2 flex-wrap">
         <Button loading={busy} disabled={!title.trim() || !body.trim()} onClick={() => save(item?.id ?? null, {
@@ -120,6 +146,7 @@ function LeafletForm({ item, onDone, onCancel }: { item: Leaflet | null; onDone:
 export function QuestionsAdmin() {
   const { data, error, loading, reload } = useLoad(async () =>
     must(await supabase.from("questions").select("*").order("week", { ascending: false })) as Question[], []);
+  const notify = useNotifyStatus("question", data);
   const [edit, setEdit] = useState<Question | "new" | null>(null);
   if (loading && !data) return <Loading />;
   if (error || !data) return <ErrorBox>{error}</ErrorBox>;
@@ -138,6 +165,7 @@ export function QuestionsAdmin() {
                 <div className="flex gap-2 mt-1 items-center">
                   <span className="text-xs text-muted">{fmtWeek(q.week)}</span>
                   {!q.published_at ? <Badge tone="gold">черновик</Badge> : closed ? <Badge>закрыт</Badge> : <Badge tone="green">открыт</Badge>}
+                  <NotifyBadge row={notify.get(q.id)} />
                 </div>
               </button>
             );
@@ -160,7 +188,7 @@ function QuestionForm({ item, onDone, onCancel }: { item: Question | null; onDon
       <Field label="Неделя (понедельник)"><Input type="date" value={week} onChange={(e) => setWeek(e.target.value)} /></Field>
       <Field label="Вопрос" hint="Открытый, личный, без «правильного» ответа"><Textarea value={body} onChange={(e) => setBody(e.target.value)} /></Field>
       <Field label="Принимать ответы до" hint="Пусто — без срока"><Input type="datetime-local" value={closes} onChange={(e) => setCloses(e.target.value)} /></Field>
-      <PublishBox checked={pub} onChange={setPub} label="Опубликовать (ребята смогут отвечать)" />
+      <PublishBox checked={pub} onChange={setPub} label={`Опубликовать (ребята смогут отвечать)${item?.published_at ? "" : NOTIFY_HINT}`} />
       <ErrorBox>{error}</ErrorBox>
       <div className="flex gap-2 flex-wrap">
         <Button loading={busy} disabled={!body.trim()} onClick={() => save(item?.id ?? null, {
@@ -177,6 +205,7 @@ function QuestionForm({ item, onDone, onCancel }: { item: Question | null; onDon
 export function AnnouncementsAdmin() {
   const { data, error, loading, reload } = useLoad(async () =>
     must(await supabase.from("announcements").select("*").order("created_at", { ascending: false })) as Announcement[], []);
+  const notify = useNotifyStatus("announcement", data);
   const [edit, setEdit] = useState<Announcement | "new" | null>(null);
   if (loading && !data) return <Loading />;
   if (error || !data) return <ErrorBox>{error}</ErrorBox>;
@@ -193,6 +222,7 @@ export function AnnouncementsAdmin() {
                 <p className="font-medium text-night">{a.title}</p>
                 {a.pinned && <Badge tone="gold">важно</Badge>}
                 {!a.published_at && <Badge>черновик</Badge>}
+                <span className="ml-auto"><NotifyBadge row={notify.get(a.id)} /></span>
               </div>
               <p className="text-xs text-muted">{fmtDate(a.published_at ?? a.created_at)}</p>
             </button>
@@ -215,7 +245,7 @@ function AnnouncementForm({ item, onDone, onCancel }: { item: Announcement | nul
       <Field label="Заголовок"><Input value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
       <Field label="Текст"><Textarea value={body} onChange={(e) => setBody(e.target.value)} /></Field>
       <PublishBox checked={pinned} onChange={setPinned} label="Важное (закрепить сверху)" />
-      <PublishBox checked={pub} onChange={setPub} />
+      <PublishBox checked={pub} onChange={setPub} label={`Опубликовать (увидят все)${item?.published_at ? "" : NOTIFY_HINT}`} />
       <ErrorBox>{error}</ErrorBox>
       <div className="flex gap-2 flex-wrap">
         <Button loading={busy} disabled={!title.trim() || !body.trim()} onClick={() => save(item?.id ?? null, {

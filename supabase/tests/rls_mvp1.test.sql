@@ -217,8 +217,11 @@ select throws_ok($$insert into public.invites (role, parent_id, created_by)
 select throws_ok($$insert into public.invites (role, parent_id, created_by, approved_by)
   values ('teen', '00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000004')$$,
   '42501', null, 'родитель: не может сам одобрить приглашение');
-select lives_ok($$insert into public.push_subscriptions (endpoint, p256dh, auth) values ('https://push/olga', 'k', 'a')$$,
-  'родитель: подписывается на уведомления');
+select lives_ok($$select public.push_subscribe('https://fcm.googleapis.com/fcm/send/olga',
+  repeat('A', 87), repeat('B', 22))$$, 'родитель: подписывается на уведомления (через функцию)');
+select throws_ok($$insert into public.push_subscriptions (endpoint, p256dh, auth)
+  values ('https://fcm.googleapis.com/fcm/send/olga2', repeat('A', 87), repeat('B', 22))$$,
+  '42501', null, 'родитель: напрямую в таблицу подписок писать нельзя');
 select tests.logout();
 
 -- ════════════════════════════════════════════════════════════
