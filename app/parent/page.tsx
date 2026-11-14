@@ -119,7 +119,7 @@ function ConsentBlock({ kid, doc, consent, onChange }: { kid: Profile; doc: Doc 
         <Button size="sm" variant="ghost" className="mt-1 -ml-3" onClick={() => setAsk(true)}>Отозвать согласие</Button>
         <ErrorBox>{error}</ErrorBox>
         <Confirm open={ask} title="Отозвать согласие?" danger confirmText="Отозвать" loading={busy}
-          text={`${kid.display_name} сразу потеряет доступ к приложению. Вернуть можно, подписав согласие снова.`}
+          text="Аккаунт ребёнка сразу перестанет работать. Вернуть можно, подписав согласие снова." 
           onConfirm={revoke} onCancel={() => setAsk(false)} />
       </div>
     );
@@ -140,11 +140,11 @@ function ConsentBlock({ kid, doc, consent, onChange }: { kid: Profile; doc: Doc 
       </div>
       <label className="flex items-start gap-2 mt-3 text-sm">
         <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1 h-4 w-4 accent-[#1c2340]" />
-        <span>Я законный представитель {kid.display_name} и согласен(на) на обработку данных на этих условиях.</span>
+        <span>Я законный представитель ребёнка ({kid.display_name}) и согласен(на) на обработку данных на этих условиях.</span>
       </label>
       <ErrorBox>{error}</ErrorBox>
       <Button className="mt-3" disabled={!agree || !doc} loading={busy} onClick={sign}>Подписать согласие</Button>
-      <p className="text-xs text-muted mt-2">После подписи лидер подтвердит аккаунт, и {kid.display_name} сможет пользоваться приложением.</p>
+      <p className="text-xs text-muted mt-2">После подписи лидер подтвердит аккаунт, и ребёнок сможет пользоваться приложением.</p>
     </div>
   );
 }
@@ -167,7 +167,7 @@ function ChildInbox({ kid, access }: { kid: Profile; access: InboxAccess | null 
       <div>
         <p className="text-sm font-semibold text-night">Обращения к лидерам</p>
         <p className="text-sm text-muted mt-1">
-          Сообщения {kid.display_name} лидерам вам не видны. Доступ может открыть лидер по вашей просьбе — тогда {kid.display_name} увидит, что вы читаете, и только сообщения после открытия.
+          Эти сообщения видят только лидеры. По вашей просьбе лидер может открыть вам чтение — ребёнок увидит это, а вам будут видны только сообщения, написанные после открытия.
         </p>
       </div>
     );
@@ -175,7 +175,7 @@ function ChildInbox({ kid, access }: { kid: Profile; access: InboxAccess | null 
   return (
     <div>
       <p className="text-sm font-semibold text-night">Обращения к лидерам</p>
-      <Notice>Лидер открыл вам чтение с {fmtDate(access.granted_at)}. {kid.display_name} видит это. Каждое чтение записывается в журнал.</Notice>
+      <Notice>Лидер открыл вам чтение с {fmtDate(access.granted_at)}. Ребёнок видит это в приложении. Каждое чтение записывается в журнал.</Notice>
       {rows === null ? (
         <Button size="sm" variant="secondary" onClick={load} loading={busy}>Показать сообщения</Button>
       ) : rows.length === 0 ? (

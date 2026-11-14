@@ -30,14 +30,14 @@ export function PasswordReset({ teenId, name }: { teenId: string; name: string }
       <ErrorBox>{error}</ErrorBox>
       {result && (
         <div className="rounded-xl bg-dawn border border-[#f5dfb8] p-3 mt-2">
-          <p className="text-sm font-semibold text-night">Новый пароль для {name}</p>
+          <p className="text-sm font-semibold text-night">Новый пароль · {name}</p>
           {result.login && <p className="text-sm mt-1">Логин: <b className="font-mono">{result.login}</b></p>}
           <p className="text-sm">Пароль: <b className="font-mono text-lg tracking-wide">{result.password}</b></p>
           <p className="text-xs text-muted mt-1">Передайте лично. После закрытия пароль больше не покажется.</p>
           <Button size="sm" variant="ghost" className="mt-1" onClick={() => setResult(null)}>Готово</Button>
         </div>
       )}
-      <Confirm open={ask} title={`Сбросить пароль для ${name}?`} text="Старый пароль перестанет работать. Новый пароль покажется один раз." confirmText="Сбросить"
+      <Confirm open={ask} title={`Сбросить пароль? (${name})`} text="Старый пароль перестанет работать. Новый пароль покажется один раз." confirmText="Сбросить"
         loading={busy} onConfirm={reset} onCancel={() => setAsk(false)} />
     </div>
   );

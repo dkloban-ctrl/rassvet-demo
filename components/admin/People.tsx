@@ -152,7 +152,7 @@ function PersonRow({ p, data, open, onToggle, onChange }: {
                     </div>
                   );
                 })}
-                <p className="text-xs text-muted mt-1">Родитель увидит только сообщения после открытия. {p.display_name} видит, кто читает.</p>
+                <p className="text-xs text-muted mt-1">Родитель увидит только сообщения после открытия. Ребёнок видит, кто читает.</p>
               </div>
 
               <div className="border-t border-line pt-3 flex gap-2 items-end">

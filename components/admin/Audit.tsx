@@ -16,8 +16,8 @@ const TABLE: Record<string, string> = {
 
 function describe(r: Row, name: (id?: unknown) => string): string {
   const o = r.old_data ?? {}, n = r.new_data ?? {};
-  if (r.action === "parent_read_inbox") return `прочитал(а) обращения ребёнка: ${name(r.row_id)}`;
-  if (r.action === "password_reset") return `сбросил(а) пароль: ${name(r.row_id)}`;
+  if (r.action === "parent_read_inbox") return `чтение обращений ребёнка · ${name(r.row_id)}`;
+  if (r.action === "password_reset") return `сброс пароля · ${name(r.row_id)}`;
   const t = r.table_name ?? "";
   if (t === "profiles" && r.action === "update") {
     const parts: string[] = [];
@@ -28,17 +28,17 @@ function describe(r: Row, name: (id?: unknown) => string): string {
     return `${name(n.id)}: ${parts.join(", ") || "изменение профиля"}`;
   }
   if (t === "parent_inbox_access") {
-    if (r.action === "insert") return `открыл(а) ${name(n.parent_id)} чтение обращений ${name(n.teen_id)}`;
-    if (r.action === "update" && n.revoked_at) return `закрыл(а) ${name(n.parent_id)} чтение обращений ${name(n.teen_id)}`;
+    if (r.action === "insert") return `доступ к обращениям открыт · ребёнок: ${name(n.teen_id)}, читает: ${name(n.parent_id)}`;
+    if (r.action === "update" && n.revoked_at) return `доступ к обращениям закрыт · ребёнок: ${name(n.teen_id)}, родитель: ${name(n.parent_id)}`;
   }
   if (t === "consents") {
-    if (r.action === "insert") return `${name(n.parent_id)} подписал(а) согласие за ${name(n.teen_id)}`;
-    if (r.action === "update" && n.revoked_at) return `согласие за ${name(n.teen_id)} отозвано`;
+    if (r.action === "insert") return `согласие подписано · ребёнок: ${name(n.teen_id)}, родитель: ${name(n.parent_id)}`;
+    if (r.action === "update" && n.revoked_at) return `согласие отозвано · ребёнок: ${name(n.teen_id)}`;
   }
-  if (t === "family_links" && r.action === "insert") return `${name(n.parent_id)} привязан(а) к ${name(n.teen_id)}`;
+  if (t === "family_links" && r.action === "insert") return `связь «родитель — ребёнок» · ${name(n.parent_id)} — ${name(n.teen_id)}`;
   if (t === "invites") {
     if (r.action === "insert") return `создано приглашение (${ROLE_LABEL[n.role as Role]})`;
-    if (r.action === "update" && n.used_at && !o.used_at) return `по приглашению зарегистрирован(а) ${name(n.used_by)}`;
+    if (r.action === "update" && n.used_at && !o.used_at) return `регистрация по приглашению · ${name(n.used_by)}`;
     if (r.action === "update" && n.approved_by && !o.approved_by) return "приглашение одобрено";
   }
   if (t === "answers" && r.action === "update" && n.hidden_at !== o.hidden_at) return n.hidden_at ? "скрыт ответ на вопрос" : "ответ снова показан";
